@@ -1,88 +1,107 @@
-# Nome do workflow exibido no GitHub Actions
-name: Quality Gate com IA (GroqCloud) - Bloqueado se cobertura < 80% - abrindo issue automaticamente
+# Nome exibido no GitHub Actions
+name: Quality Gate com IA + Issue Automática
 
-# Define quando o workflow pode ser executado
+# Define quando workflow pode ser executado
 on:
 
-  # Permite execução manual pelo botão "Run workflow"
+  # Execução manual via botão "Run workflow"
   workflow_dispatch:
 
-# Permissões necessárias para criar issues automaticamente
+# Permissões necessárias
 permissions:
+
+  # Permite criar issues automaticamente
   issues: write
 
-# Lista de jobs da pipeline
+# Lista de jobs
 jobs:
 
   # Nome interno do job
-  quality-gate-ia-gratuita:
+  quality-gate-ia:
 
-    # Máquina virtual Linux utilizada
+    # Máquina virtual utilizada
     runs-on: ubuntu-latest
 
-    # Etapas da pipeline
+    # Passos do pipeline
     steps:
 
       # Faz clone do repositório
       - name: Clonar repositório
         uses: actions/checkout@v4
 
-      # Configura ambiente Python
+      # Configura Python
       - name: Configurar Python
         uses: actions/setup-python@v5
         with:
 
-          # Define versão do Python
+          # Versão do Python
           python-version: '3.11'
 
-      # Instala dependências necessárias
+      # Instala dependências
       - name: Instalar dependências
         run: |
 
-          # Instala pytest e cobertura
+          # Instala pytest
           pip install pytest pytest-cov
 
-      # Executa testes e coleta métricas
+      # Executa testes e coleta cobertura
       - name: Coletar métricas
 
         # Variáveis de ambiente
         env:
 
-          # Faz Python reconhecer raiz do projeto
+          # Permite importar módulos locais
           PYTHONPATH: .
 
         run: |
+
+          echo "Executando testes..."
 
           # Executa testes com cobertura
           # O || true impede interrupção imediata
           pytest tests_baixa --cov=src_baixa --cov-report=json -q || true
 
-          # Lê percentual de cobertura do arquivo coverage.json
+          echo "Lendo cobertura..."
+
+          # Extrai cobertura do JSON
           COV=$(python -c "import json; d=json.load(open('coverage.json')); print(round(d['totals']['percent_covered']))")
 
-          # Exibe cobertura
+          # Mostra cobertura
           echo "Cobertura atual: $COV%"
 
-          # Salva variável para próximos steps
+          # Salva variável global
           echo "COVERAGE=$COV" >> $GITHUB_ENV
 
-      # Consulta IA para decidir se pipeline deve passar
-      - name: Consultar IA — Quality Gate
+      # Verifica autenticação GitHub CLI
+      - name: Testar GitHub CLI
 
-        # Variáveis protegidas
         env:
 
-          # Chave da API GroqCloud
+          # Token automático do GitHub
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        run: |
+
+          echo "Verificando autenticação..."
+
+          gh auth status
+
+      # Consulta IA
+      - name: Consultar IA — Quality Gate
+
+        env:
+
+          # Chave da GroqCloud
           GROQCLOUD_API_KEY: ${{ secrets.GROQCLOUD_API_KEY }}
 
-          # Token automático do GitHub Actions
+          # Token GitHub
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
         run: |
 
           echo "Consultando IA sobre qualidade do código..."
 
-          # Requisição HTTP para IA
+          # Requisição para IA
           RESPONSE=$(curl -s https://api.groq.com/openai/v1/chat/completions \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $GROQCLOUD_API_KEY" \
@@ -91,7 +110,7 @@ jobs:
               "messages": [
                 {
                   "role": "system",
-                  "content": "Você é um quality gate de pipeline CI/CD. Responda apenas APROVADO ou BLOQUEADO seguido de uma justificativa curta."
+                  "content": "Você é um quality gate de pipeline CI/CD. Responda apenas APROVADO ou BLOQUEADO seguido de justificativa curta."
                 },
                 {
                   "role": "user",
@@ -100,28 +119,34 @@ jobs:
               ]
             }')
 
-          # Exibe resposta completa da IA
+          # Mostra resposta completa
           echo "Resposta da IA:"
           echo "$RESPONSE"
 
-          # Extrai somente conteúdo textual da resposta
+          # Extrai resposta textual
           DECISION=$(echo "$RESPONSE" | python3 -c "import sys,json; r=json.load(sys.stdin); print(r['choices'][0]['message']['content'] if 'choices' in r else 'BLOQUEADO - erro ao consultar IA')")
 
-          # Mostra decisão final
+          # Mostra decisão
+          echo "Decisão da IA:"
           echo "$DECISION"
 
           # Se IA bloquear pipeline
           if echo "$DECISION" | grep -q "BLOQUEADO"; then
 
-            # Exibe erro visual no GitHub Actions
             echo "::error::Quality Gate BLOQUEADO pela IA"
 
-            # Cria issue automática
+            echo "Criando issue automática..."
+
+            # Cria issue automaticamente
             gh issue create \
               --title "Quality Gate bloqueado pela IA" \
-              --body "A IA detectou cobertura insuficiente ou risco no código. Cobertura atual: $COVERAGE%. Decisão da IA: $DECISION"
+              --body "Cobertura atual: $COVERAGE%. Decisão da IA: $DECISION"
 
-            # Interrompe pipeline com erro
+            echo "Issue criada com sucesso."
+
+            # Falha pipeline
             exit 1
 
           fi
+
+          echo "Pipeline aprovado pela IA."
