@@ -1,3 +1,4 @@
+import pytest
 from src.app import somar, dividir
 
 def test_somar():
