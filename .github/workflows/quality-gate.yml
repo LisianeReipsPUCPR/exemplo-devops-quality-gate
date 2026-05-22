@@ -1,0 +1,45 @@
+name: Quality Gate
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  coverage-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependências
+        run: |
+          pip install pytest pytest-cov
+
+      - name: Rodar testes com cobertura
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest --cov=src --cov-report=json --cov-report=term
+
+      - name: Aplicar Quality Gate
+        run: |
+          COVERAGE=$(python -c "import json; print(json.load(open('coverage.json'))['totals']['percent_covered'])")
+
+          echo "Cobertura atual: $COVERAGE%"
+
+          MIN_COVERAGE=80
+
+          if (( $(echo "$COVERAGE < $MIN_COVERAGE" | bc -l) )); then
+            echo "❌ Quality Gate falhou"
+            exit 1
+          else
+            echo "✅ Quality Gate aprovado"
+          fi
