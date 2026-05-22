@@ -1,5 +1,5 @@
 # Nome do workflow exibido no GitHub Actions
-name: Quality Gate com IA (GroqCloud) - Bloqueado se cobertura < 80%
+name: Quality Gate com IA (GroqCloud) - Bloqueado se cobertura < 80% - abrindo issue automaticamente
 
 # Define quando o workflow pode ser executado
 on:
