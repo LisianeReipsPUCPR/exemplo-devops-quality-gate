@@ -1,5 +1,5 @@
 # Nome do workflow exibido no GitHub Actions
-name: Quality Gate com IA (GroqCloud)
+name: Quality Gate com IA (GroqCloud) - Autorizado
 
 # Define como o workflow será executado
 on:
