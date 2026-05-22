@@ -1,0 +1,40 @@
+name: Cobertura Alta
+
+on:
+  workflow_dispatch:
+
+jobs:
+  cobertura-alta:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependências
+        run: |
+          pip install pytest pytest-cov
+
+      - name: Rodar testes
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest tests_alta --cov=src_alta --cov-report=term --cov-report=json
+
+      - name: Quality Gate
+        run: |
+          COVERAGE=$(python -c "import json; print(json.load(open('coverage.json'))['totals']['percent_covered'])")
+
+          echo "Cobertura: $COVERAGE%"
+
+          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+            echo "❌ Falhou"
+            exit 1
+          else
+            echo "✅ Aprovado"
+          fi
