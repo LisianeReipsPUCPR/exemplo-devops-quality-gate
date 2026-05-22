@@ -22,9 +22,10 @@ jobs:
           pip install pytest pytest-cov
 
       - name: Rodar testes com cobertura
+        env:
+            PYTHONPATH: .
         run: |
-          pytest --cov=src --cov-report=json --cov-report=term
-          echo "COVERAGE=$(python -c "import json; d=json.load(open('coverage.json')); print(round(d['totals']['percent_covered']))")" >> $GITHUB_ENV
+            pytest --cov=src --cov-report=json --cov-report=term
 
       - name: Exibir cobertura
         run: 'echo "Cobertura atual: ${{ env.COVERAGE }}%"'
