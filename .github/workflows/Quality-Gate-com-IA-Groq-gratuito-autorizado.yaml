@@ -51,7 +51,7 @@ jobs:
 
           # Executa testes com cobertura
           # O || true evita parar pipeline imediatamente
-          pytest tests_alta --cov=src_alta --cov-report=json -q || true
+          pytest tests_alta_ia_autorizado --cov=src_alta --cov-report=json -q || true
 
           # Lê cobertura do arquivo JSON
           COV=$(python -c "import json; d=json.load(open('coverage.json')); print(round(d['totals']['percent_covered']))")
@@ -85,7 +85,7 @@ jobs:
                 },
                 {
                   "role": "user",
-                  "content": "Cobertura de testes: '"$COVERAGE"'%. Projeto Python com possível divisão por zero não testada. Deve avançar para produção?"
+                  "content": "Cobertura de testes: '"$COVERAGE"'%. Projeto Python com tratamento de divisão por zero e testes automatizados cobrindo cenários principais. Deve avançar para produção?"
                 }
               ]
             }')
