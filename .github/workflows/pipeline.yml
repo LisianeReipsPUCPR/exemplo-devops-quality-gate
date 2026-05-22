@@ -1,0 +1,43 @@
+name: Pipeline Inteligente com Quality Gate
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Instalar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependências
+        run: |
+          pip install pytest pytest-cov
+
+      - name: Rodar testes com cobertura
+        run: |
+          pytest --cov=src --cov-report=json --cov-report=term
+          echo "COVERAGE=$(python -c "import json; d=json.load(open('coverage.json')); print(round(d['totals']['percent_covered']))")" >> $GITHUB_ENV
+
+      - name: Exibir cobertura
+        run: echo "Cobertura atual: ${{ env.COVERAGE }}%"
+
+  quality-gate-ia:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Simular Quality Gate com IA
+        run: |
+          echo "Consultando IA sobre qualidade do código..."
+          COVERAGE=60
+          PROMPT="Cobertura de testes: ${COVERAGE}%. Há um bug de divisão por zero não coberto por testes. O pipeline deve avançar para produção? Responda com: APROVADO ou BLOQUEADO e uma justificativa em 2 linhas."
+          echo "Prompt enviado à IA: $PROMPT"
+          # Simulação da resposta (em aula real: usar curl para OpenAI/Claude)
+          echo "Resposta simulada: BLOQUEADO — cobertura abaixo de 80% e risco de falha em produção."
