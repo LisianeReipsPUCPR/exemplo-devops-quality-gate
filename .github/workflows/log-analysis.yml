@@ -1,69 +1,108 @@
+# Nome do workflow
 name: IA analisando logs
 
+# Define quando pipeline pode ser executada
 on:
- workflow_dispatch:
 
+  # Execução manual pelo botão "Run workflow"
+  workflow_dispatch:
+
+# Permissões necessárias
 permissions:
- issues: write
 
+  # Permite criar issues automaticamente
+  issues: write
+
+# Lista de jobs
 jobs:
 
- analisar-logs:
+  # Nome interno do job
+  analisar-logs:
 
-   runs-on: ubuntu-latest
+    # Máquina virtual Linux
+    runs-on: ubuntu-latest
 
-   steps:
+    # Etapas do pipeline
+    steps:
 
-     - name: Clonar repositório
-       uses: actions/checkout@v4
+      # Clona repositório
+      - name: Clonar repositório
+        uses: actions/checkout@v4
 
-     - name: Ler logs
-       id: logs
-       run: |
+      # Faz login no GitHub CLI
+      - name: Login GitHub CLI
+        run: |
 
-         echo "LOG_CONTENT<<EOF" >> $GITHUB_ENV
-         cat logs/app.log >> $GITHUB_ENV
-         echo "EOF" >> $GITHUB_ENV
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
-     - name: Login GitHub CLI
-       run: |
-         echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+      # Analisa logs usando IA
+      - name: IA analisa logs
 
-     - name: IA analisa logs
-       env:
-         GROQCLOUD_API_KEY: ${{ secrets.GROQCLOUD_API_KEY }}
+        # Variáveis protegidas
+        env:
 
-       run: |
+          # Chave da API GroqCloud
+          GROQCLOUD_API_KEY: ${{ secrets.GROQCLOUD_API_KEY }}
 
-         RESPONSE=$(curl -s https://api.groq.com/openai/v1/chat/completions \
-           -H "Content-Type: application/json" \
-           -H "Authorization: Bearer $GROQCLOUD_API_KEY" \
-           -d '{
-             "model": "llama-3.1-8b-instant",
-             "messages": [
-               {
-                 "role": "system",
-                 "content": "Você é um especialista em observabilidade e análise de logs."
-               },
-               {
-                 "role": "user",
-                 "content": "Analise estes logs e diga se existe erro crítico:\n\n'"$LOG_CONTENT"'"
-               }
-             ]
-           }')
+        run: |
 
-         echo "$RESPONSE"
+          echo "Lendo logs..."
 
-         DECISION=$(echo "$RESPONSE" | python3 -c "import sys,json; r=json.load(sys.stdin); print(r['choices'][0]['message']['content'])")
+          # Lê arquivo de log e remove quebras de linha
+          LOG_CONTENT=$(cat logs/app.log | tr '\n' ' ')
 
-         echo "$DECISION"
+          echo "Logs carregados."
 
-         if echo "$DECISION" | grep -qi "crítico"; then
+          echo "Consultando IA..."
 
-           gh issue create \
-             --title "Erro crítico detectado nos logs" \
-             --body "$DECISION"
+          # Faz requisição para IA
+          RESPONSE=$(curl -s https://api.groq.com/openai/v1/chat/completions \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $GROQCLOUD_API_KEY" \
+            -d '{
+              "model": "llama-3.1-8b-instant",
+              "messages": [
+                {
+                  "role": "system",
+                  "content": "Você é especialista em observabilidade, monitoramento e análise de logs."
+                },
+                {
+                  "role": "user",
+                  "content": "Analise estes logs e diga se existe erro crítico: '"$LOG_CONTENT"'"
+                }
+              ]
+            }')
 
-           exit 1
+          # Mostra resposta completa da API
+          echo "Resposta da IA:"
+          echo "$RESPONSE"
 
-         fi
+          # Extrai apenas resposta textual
+          DECISION=$(echo "$RESPONSE" | python3 -c "import sys,json; r=json.load(sys.stdin); print(r['choices'][0]['message']['content'] if 'choices' in r else 'Erro ao consultar IA')")
+
+          # Mostra decisão
+          echo "Decisão da IA:"
+          echo "$DECISION"
+
+          # Se IA detectar erro crítico
+          if echo "$DECISION" | grep -qi "crítico"; then
+
+            echo "::error::Erro crítico detectado nos logs"
+
+            echo "Criando issue automática..."
+
+            # Cria issue automaticamente
+            ISSUE_URL=$(gh issue create \
+              --title "Erro crítico detectado nos logs" \
+              --body "$DECISION")
+
+            # Mostra link da issue
+            echo "Issue criada:"
+            echo "$ISSUE_URL"
+
+            # Falha pipeline
+            exit 1
+
+          fi
+
+          echo "Nenhum erro crítico detectado."
