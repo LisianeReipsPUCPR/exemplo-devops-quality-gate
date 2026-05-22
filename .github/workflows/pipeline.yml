@@ -27,7 +27,7 @@ jobs:
           echo "COVERAGE=$(python -c "import json; d=json.load(open('coverage.json')); print(round(d['totals']['percent_covered']))")" >> $GITHUB_ENV
 
       - name: Exibir cobertura
-        run: echo "Cobertura atual: ${{ env.COVERAGE }}%"
+        run: 'echo "Cobertura atual: ${{ env.COVERAGE }}%"'
 
   quality-gate-ia:
     needs: build-and-test
