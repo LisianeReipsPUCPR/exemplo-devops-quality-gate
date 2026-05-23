@@ -39,11 +39,11 @@ jobs:
               \"messages\": [
                 {
                   \"role\": \"system\",
-                  \"content\": \"Você é especialista em observabilidade. Responda APENAS com: APROVADO (métricas saudáveis, sem ação necessária) ou REPROVADO (valores críticos que exigem ação imediata). Não analise valores moderadamente altos ou recomendações - apenas classifique como aprovado ou reprovado.\"
+                  \"content\": \"Você é especialista em observabilidade. Classifique as métricas como APROVADO ou REPROVADO usando estes thresholds:\\n- CPU > 80% = REPROVADO\\n- Memory > 85% = REPROVADO\\n- Latency > 2000ms = REPROVADO\\n- Error Rate > 5% = REPROVADO\\nSe TODOS os valores estão dentro dos limites, responda APENAS 'APROVADO'. Caso contrário, responda APENAS 'REPROVADO'. Nada mais.\"
                 },
                 {
                   \"role\": \"user\",
-                  \"content\": \"Analise estas métricas: $METRICS. Responda APENAS com APROVADO ou REPROVADO.\"
+                  \"content\": \"Classifique estas métricas: $METRICS\"
                 }
               ]
             }")
