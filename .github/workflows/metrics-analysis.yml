@@ -1,4 +1,4 @@
-name: IA analisando métricas - reprovado pela IA
+name: IA analisando métricas - aprovado pela IA
 
 on:
   workflow_dispatch:
@@ -21,7 +21,7 @@ jobs:
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
-      - name: IA analisa métricas - reprovado pela IA
+      - name: IA analisa métricas - aprovado pela IA
         env:
           GROQCLOUD_API_KEY: ${{ secrets.GROQCLOUD_API_KEY }}
 
@@ -29,7 +29,7 @@ jobs:
 
           echo "Lendo métricas..."
 
-          METRICS=$(cat metrics/system-reprovado.json | jq -c . | sed 's/"/\\"/g')
+          METRICS=$(cat metrics/system-aprovado.json | jq -c . | sed 's/"/\\"/g')
 
           RESPONSE=$(curl -s https://api.groq.com/openai/v1/chat/completions \
             -H "Content-Type: application/json" \
@@ -39,7 +39,7 @@ jobs:
               \"messages\": [
                 {
                   \"role\": \"system\",
-                  \"content\": \"Você é especialista em observabilidade. Classifique as métricas como APROVADO ou REPROVADO usando estes thresholds:\\n- CPU > 80% = REPROVADO\\n- Memory > 85% = REPROVADO\\n- Latency > 2000ms = REPROVADO\\n- Error Rate > 5% = REPROVADO\\nSe TODOS os valores estão dentro dos limites, responda APENAS 'APROVADO'. Caso contrário, responda APENAS 'REPROVADO'. Nada mais.\"
+                  \"content\": \"Você é especialista em observabilidade. Classifique as métricas como APROVADO ou aprovado usando estes thresholds:\\n- CPU > 80% = aprovado\\n- Memory > 85% = aprovado\\n- Latency > 2000ms = aprovado\\n- Error Rate > 5% = aprovado\\nSe TODOS os valores estão dentro dos limites, responda APENAS 'APROVADO'. Caso contrário, responda APENAS 'aprovado'. Nada mais.\"
                 },
                 {
                   \"role\": \"user\",
@@ -54,7 +54,7 @@ jobs:
 
           echo "$DECISION"
 
-          if echo "$DECISION" | grep -qiE "REPROVADO"; then
+          if echo "$DECISION" | grep -qiE "aprovado"; then
 
             ISSUE_URL=$(gh issue create \
               --title "Métricas reprovadas - ação necessária" \
