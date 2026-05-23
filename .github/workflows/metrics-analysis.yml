@@ -29,24 +29,24 @@ jobs:
 
           echo "Lendo métricas..."
 
-          METRICS=$(cat metrics/system.json)
+          METRICS=$(cat metrics/system.json | jq -c . | sed 's/"/\\"/g')
 
           RESPONSE=$(curl -s https://api.groq.com/openai/v1/chat/completions \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $GROQCLOUD_API_KEY" \
-            -d '{
-              "model": "llama-3.1-8b-instant",
-              "messages": [
+            -d "{
+              \"model\": \"llama-3.1-8b-instant\",
+              \"messages\": [
                 {
-                  "role": "system",
-                  "content": "Você é especialista em observabilidade e análise de métricas."
+                  \"role\": \"system\",
+                  \"content\": \"Você é especialista em observabilidade e análise de métricas.\"
                 },
                 {
-                  "role": "user",
-                  "content": "Analise estas métricas e diga se existe risco operacional: '"$METRICS"'"
+                  \"role\": \"user\",
+                  \"content\": \"Analise estas métricas e diga se existe risco operacional: $METRICS\"
                 }
               ]
-            }')
+            }")
 
           echo "$RESPONSE"
 
