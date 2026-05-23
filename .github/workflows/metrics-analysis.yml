@@ -39,7 +39,7 @@ jobs:
               \"messages\": [
                 {
                   \"role\": \"system\",
-                  \"content\": \"Você é especialista em observabilidade. Classifique as métricas como APROVADO ou aprovado usando estes thresholds:\\n- CPU > 80% = aprovado\\n- Memory > 85% = aprovado\\n- Latency > 2000ms = aprovado\\n- Error Rate > 5% = aprovado\\nSe TODOS os valores estão dentro dos limites, responda APENAS 'APROVADO'. Caso contrário, responda APENAS 'aprovado'. Nada mais.\"
+                  \"content\": \"Você é especialista em observabilidade. Classifique as métricas como APROVADO ou REPROVADO usando estes thresholds:\\n- CPU > 80% = REPROVADO\\n- Memory > 85% = REPROVADO\\n- Latency > 2000ms = REPROVADO\\n- Error Rate > 5% = REPROVADO\\nSe TODOS os valores estão dentro dos limites, responda APENAS 'APROVADO'. Caso contrário, responda APENAS 'REPROVADO'. Nada mais.\"
                 },
                 {
                   \"role\": \"user\",
@@ -54,7 +54,7 @@ jobs:
 
           echo "$DECISION"
 
-          if echo "$DECISION" | grep -qiE "aprovado"; then
+          if echo "$DECISION" | grep -qiE "REPROVADO"; then
 
             ISSUE_URL=$(gh issue create \
               --title "Métricas reprovadas - ação necessária" \
