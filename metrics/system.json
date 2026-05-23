@@ -1,6 +1,6 @@
 {
- "cpu": 95,
- "memory": 91,
- "latency_ms": 3500,
- "error_rate": 18
+ "cpu": 15,
+ "memory": 30,
+ "latency_ms": 50,
+ "error_rate": 0.05
 }
