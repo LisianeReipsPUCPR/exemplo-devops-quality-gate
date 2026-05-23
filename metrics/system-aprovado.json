@@ -1,0 +1,6 @@
+{
+ "cpu": 25,
+ "memory": 45,
+ "latency_ms": 250,
+ "error_rate": 1
+}
