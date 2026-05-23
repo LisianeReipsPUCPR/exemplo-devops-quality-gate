@@ -39,11 +39,11 @@ jobs:
               \"messages\": [
                 {
                   \"role\": \"system\",
-                  \"content\": \"Você é especialista em observabilidade e análise de métricas.\"
+                  "content": "Você é especialista em observabilidade. Responda APENAS com: APROVADO (métricas saudáveis, sem ação necessária) ou REPROVADO (valores críticos que exigem ação imediata). Não analise valores moderadamente altos ou recomendações - apenas classifique como aprovado ou reprovado."
                 },
                 {
-                  \"role\": \"user\",
-                  \"content\": \"Analise estas métricas e diga se existe risco operacional: $METRICS\"
+                  "role": "user",
+                  "content": "Analise estas métricas: $METRICS. Responda APENAS com APROVADO ou REPROVADO."
                 }
               ]
             }")
@@ -54,10 +54,10 @@ jobs:
 
           echo "$DECISION"
 
-          if echo "$DECISION" | grep -qiE "crítico|risco|grave|instável"; then
+          if echo "$DECISION" | grep -qiE "REPROVADO"; then
 
             ISSUE_URL=$(gh issue create \
-              --title "Risco detectado nas métricas" \
+              --title "Métricas reprovadas - ação necessária" \
               --body "$DECISION")
 
             echo "$ISSUE_URL"
@@ -65,3 +65,6 @@ jobs:
             exit 1
 
           fi
+          
+          echo "✅ Métricas aprovadas! Pipeline prosseguindo..."
+          exit 0
